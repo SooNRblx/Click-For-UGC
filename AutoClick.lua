@@ -3,27 +3,21 @@ local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Nettoyage
 if playerGui:FindFirstChild("MasterObbyGui") then
     playerGui.MasterObbyGui:Destroy()
 end
 
--- 2. VARIABLES
+-- 2. VARIABLES & ACCÈS AU JEU
 local autoFarmActive = false
 local antiAfkActive = false
 local walkSpeedValue = 16
-local jumpPowerValue = 50
-local farmWaitTime = 0.1 -- Vitesse du clic par défaut
+local farmWaitTime = 0.1 -- Vitesse de clic
 
--- Ciblage du bouton de ton jeu
-local function getClickButton()
-    local mainGui = playerGui:FindFirstChild("MainGui")
-    if mainGui then
-        return mainGui:FindFirstChild("ClickButton")
-    end
-    return nil
-end
+-- On récupère l'event de clic directement depuis ton script ClickClient
+local clickEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Click")
 
 -- 3. INTERFACE
 local screenGui = Instance.new("ScreenGui", playerGui)
@@ -34,13 +28,13 @@ local logo = Instance.new("TextButton", screenGui)
 logo.Size = UDim2.new(0, 60, 0, 60)
 logo.Position = UDim2.new(0, 20, 0, 150)
 logo.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-logo.Text = "🖱️"
+logo.Text = "⚡"
 logo.TextSize = 35
 Instance.new("UICorner", logo).CornerRadius = UDim.new(0, 12)
 
 local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 350, 0, 300)
-frame.Position = UDim2.new(0.5, -175, 0.5, -150)
+frame.Size = UDim2.new(0, 350, 0, 250)
+frame.Position = UDim2.new(0.5, -175, 0.5, -125)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.Visible = false
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
@@ -54,7 +48,7 @@ Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12)
 local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(0.7, 0, 1, 0)
 title.Position = UDim2.new(0, 15, 0, 0)
-title.Text = "Master Auto-Clicker"
+title.Text = "OP AUTO-CLICKER"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 14
@@ -70,28 +64,28 @@ close.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", close)
 
 local scroll = Instance.new("ScrollingFrame", frame)
-scroll.Size = UDim2.new(1, -10, 1, -85)
+scroll.Size = UDim2.new(1, -10, 1, -50)
 scroll.Position = UDim2.new(0, 5, 0, 45)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 450)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 300)
 scroll.ScrollBarThickness = 2
 
 local layout = Instance.new("UIListLayout", scroll)
 layout.Padding = UDim.new(0, 10)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
---- SECTION FARM (AUTO CLICK) ---
+--- SECTION AUTO CLICK ---
 local farmSection = Instance.new("Frame", scroll)
-farmSection.Size = UDim2.new(0, 310, 0, 140)
+farmSection.Size = UDim2.new(0, 310, 0, 120)
 farmSection.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 Instance.new("UICorner", farmSection)
 
 local labelAF = Instance.new("TextLabel", farmSection)
 labelAF.Size = UDim2.new(0, 150, 0, 30)
-labelAF.Position = UDim2.new(0, 10, 0, 35)
-labelAF.Text = "Auto Click"
-labelAF.Font = Enum.Font.Gotham
+labelAF.Position = UDim2.new(0, 10, 0, 20)
+labelAF.Text = "Auto Clicker"
+labelAF.Font = Enum.Font.GothamBold
 labelAF.TextSize = 16
 labelAF.TextColor3 = Color3.new(1, 1, 1)
 labelAF.BackgroundTransparency = 1
@@ -99,7 +93,7 @@ labelAF.TextXAlignment = Enum.TextXAlignment.Left
 
 local btnAF = Instance.new("TextButton", farmSection)
 btnAF.Size = UDim2.new(0, 80, 0, 30)
-btnAF.Position = UDim2.new(1, -90, 0, 35)
+btnAF.Position = UDim2.new(1, -90, 0, 20)
 btnAF.Text = "OFF"
 btnAF.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 btnAF.TextColor3 = Color3.new(1, 1, 1)
@@ -107,8 +101,8 @@ Instance.new("UICorner", btnAF)
 
 local labelFS = Instance.new("TextLabel", farmSection)
 labelFS.Size = UDim2.new(0, 200, 0, 20)
-labelFS.Position = UDim2.new(0, 10, 0, 75)
-labelFS.Text = "Click Interval: 0.10s"
+labelFS.Position = UDim2.new(0, 10, 0, 60)
+labelFS.Text = "Speed: 0.10s"
 labelFS.Font = Enum.Font.Gotham
 labelFS.TextSize = 13
 labelFS.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -117,34 +111,34 @@ labelFS.TextXAlignment = Enum.TextXAlignment.Left
 
 local sliderBackFS = Instance.new("Frame", farmSection)
 sliderBackFS.Size = UDim2.new(0, 260, 0, 6)
-sliderBackFS.Position = UDim2.new(0.5, -130, 0, 110)
+sliderBackFS.Position = UDim2.new(0.5, -130, 0, 95)
 sliderBackFS.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Instance.new("UICorner", sliderBackFS)
 
 local dotFS = Instance.new("Frame", sliderBackFS)
 dotFS.Size = UDim2.new(0, 18, 0, 18)
-dotFS.Position = UDim2.new(0.05, -9, 0.5, -9)
+dotFS.Position = UDim2.new(0.1, -9, 0.5, -9)
 dotFS.BackgroundColor3 = Color3.fromRGB(150, 255, 150)
 Instance.new("UICorner", dotFS).CornerRadius = UDim.new(1, 0)
 
---- SECTION MOVEMENT ---
-local moveSection = Instance.new("Frame", scroll)
-moveSection.Size = UDim2.new(0, 310, 0, 180)
-moveSection.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Instance.new("UICorner", moveSection)
+--- SECTION VITESSE ---
+local speedSection = Instance.new("Frame", scroll)
+speedSection.Size = UDim2.new(0, 310, 0, 80)
+speedSection.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Instance.new("UICorner", speedSection)
 
-local labelWS = Instance.new("TextLabel", moveSection)
-labelWS.Size = UDim2.new(0, 200, 0, 20)
-labelWS.Position = UDim2.new(0, 10, 0, 35)
+local labelWS = Instance.new("TextLabel", speedSection)
+labelWS.Size = UDim2.new(0, 200, 0, 30)
+labelWS.Position = UDim2.new(0, 10, 0, 10)
 labelWS.Text = "WalkSpeed: 16"
 labelWS.Font = Enum.Font.Gotham
 labelWS.TextSize = 15
 labelWS.TextColor3 = Color3.new(1,1,1)
 labelWS.BackgroundTransparency = 1
 
-local sliderWS = Instance.new("Frame", moveSection)
+local sliderWS = Instance.new("Frame", speedSection)
 sliderWS.Size = UDim2.new(0, 260, 0, 6)
-sliderWS.Position = UDim2.new(0.5, -130, 0, 65)
+sliderWS.Position = UDim2.new(0.5, -130, 0, 50)
 sliderWS.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Instance.new("UICorner", sliderWS)
 
@@ -153,30 +147,6 @@ dotWS.Size = UDim2.new(0, 18, 0, 18)
 dotWS.Position = UDim2.new(0, 0, 0.5, -9)
 dotWS.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
 Instance.new("UICorner", dotWS).CornerRadius = UDim.new(1, 0)
-
---- SECTION MISC (ANTI AFK) ---
-local miscSection = Instance.new("Frame", scroll)
-miscSection.Size = UDim2.new(0, 310, 0, 80)
-miscSection.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Instance.new("UICorner", miscSection)
-
-local btnAA = Instance.new("TextButton", miscSection)
-btnAA.Size = UDim2.new(0, 80, 0, 30)
-btnAA.Position = UDim2.new(1, -90, 0, 25)
-btnAA.Text = "OFF"
-btnAA.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-btnAA.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", btnAA)
-
-local labelAA = Instance.new("TextLabel", miscSection)
-labelAA.Size = UDim2.new(0, 150, 0, 30)
-labelAA.Position = UDim2.new(0, 10, 0, 25)
-labelAA.Text = "Anti-AFK"
-labelAA.TextColor3 = Color3.new(1, 1, 1)
-labelAA.BackgroundTransparency = 1
-labelAA.Font = Enum.Font.Gotham
-labelAA.TextSize = 16
-labelAA.TextXAlignment = Enum.TextXAlignment.Left
 
 -- 4. LOGIQUE DRAG & SLIDERS
 local function makeDraggable(obj, target)
@@ -221,10 +191,10 @@ makeDraggable(logo)
 makeDraggable(frame)
 makeDraggable(header, frame)
 
-setupSlider(sliderBackFS, dotFS, 0.01, 1, true, function(v) farmWaitTime = v labelFS.Text = string.format("Click Interval: %.2fs", v) end)
+setupSlider(sliderBackFS, dotFS, 0.01, 1, true, function(v) farmWaitTime = v labelFS.Text = string.format("Speed: %.2fs", v) end)
 setupSlider(sliderWS, dotWS, 16, 250, false, function(v) walkSpeedValue = v labelWS.Text = "WalkSpeed: "..v end)
 
--- 5. LOGIQUE BOUTONS & BOUCLES
+-- 5. FONCTIONS & BOUCLES
 logo.MouseButton1Up:Connect(function() frame.Visible = not frame.Visible end)
 close.MouseButton1Click:Connect(function() frame.Visible = false end)
 
@@ -234,12 +204,7 @@ btnAF.MouseButton1Click:Connect(function()
     btnAF.BackgroundColor3 = autoFarmActive and Color3.fromRGB(40, 160, 40) or Color3.fromRGB(80, 80, 80)
 end)
 
-btnAA.MouseButton1Click:Connect(function()
-    antiAfkActive = not antiAfkActive
-    btnAA.Text = antiAfkActive and "ON" or "OFF"
-    btnAA.BackgroundColor3 = antiAfkActive and Color3.fromRGB(40, 160, 40) or Color3.fromRGB(80, 80, 80)
-end)
-
+-- Boucle WalkSpeed
 RunService.Stepped:Connect(function()
     pcall(function()
         if player.Character and player.Character:FindFirstChild("Humanoid") then
@@ -248,22 +213,15 @@ RunService.Stepped:Connect(function()
     end)
 end)
 
--- BOUCLE AUTO CLICK
+-- BOUCLE AUTO CLICK (Utilise le RemoteEvent directement)
 task.spawn(function()
     while true do
         if autoFarmActive then
-            local btn = getClickButton()
-            if btn then
-                -- Utilise firesignal si disponible, sinon simule le clic manuellement
-                if firesignal then
-                    firesignal(btn.MouseButton1Click)
-                else
-                    -- Fallback : on force l'activation
-                    for _, connection in pairs(getconnections(btn.MouseButton1Click)) do
-                        connection:Fire()
-                    end
-                end
-            end
+            pcall(function()
+                -- On active l'event de clic du serveur directement
+                -- C'est ce que fait le bouton quand tu cliques dessus
+                clickEvent:FireServer()
+            end)
             task.wait(farmWaitTime)
         else
             task.wait(0.5)
@@ -271,8 +229,8 @@ task.spawn(function()
     end
 end)
 
--- ANTI AFK
-local vu = game:GetService("VirtualUser")
+-- Anti-AFK
 player.Idled:Connect(function()
-    if antiAfkActive then pcall(function() vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame) task.wait(1) vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end) end
+    game:GetService("VirtualUser"):CaptureController()
+    game:GetService("VirtualUser"):ClickButton2(Vector2.new())
 end)
